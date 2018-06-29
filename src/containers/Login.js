@@ -7,7 +7,7 @@ import { onTransactionEvent } from "../module/Blockchain";
 let targetAddress, targetPort;
 
 class login extends React.Component {
-  connectPortalNode = () => {
+  connectNode = () => {
     const { dispatch, p2p } = this.props;
     const data = connectPortal(dispatch, p2p, {
       myPort: 20000,
@@ -33,7 +33,7 @@ class login extends React.Component {
           onChange={e => (targetPort = e.target.value)}
         />
         <br />
-        <Button onClick={this.connectPortalNode}>connect</Button>
+        <Button onClick={this.connectNode}>connect</Button>
       </div>
     );
   }

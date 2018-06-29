@@ -12,8 +12,8 @@ const def = {
   ONCOMMAND: "ONCOMMAND"
 };
 
-let peerOffer, peerAnswer;
-export default class PortalNode {
+let peerOffer;
+export default class Node {
   constructor(myPort, targetAddress, targetPort, isLocal) {
     this.myPort = myPort;
     this.myUrl = undefined;
@@ -48,16 +48,6 @@ export default class PortalNode {
       })();
     }
 
-    /* this.srv = http.Server();
-    this.io = socketio(this.srv);
-    this.srv.listen(this.myPort);
-
-    this.io.on("connection", socket => {
-      socket.on(def.OFFER, data => {
-        this.answerFirst(data, socket.id);
-      });
-    });*/
-
     if (this.targetUrl != undefined) {
       const socket = client.connect(this.targetUrl);
 
@@ -71,40 +61,6 @@ export default class PortalNode {
         peerOffer.connecting(data.userId);
       });
     }
-  }
-
-  answerFirst(data, socketId) {
-    console.log("@cli", "answer first");
-
-    return new Promise(resolve => {
-      peerAnswer = new WebRTC("answer");
-
-      peerAnswer.connecting(data.userId);
-      peerAnswer.rtc.signal(data.sdp);
-
-      setTimeout(() => {
-        resolve(false);
-      }, 4 * 1000);
-
-      peerAnswer.rtc.on("signal", sdp => {
-        this.io.sockets.sockets[socketId].emit(def.ANSWER, {
-          sdp: sdp,
-          userId: this.userId
-        });
-      });
-
-      peerAnswer.rtc.on("error", err => {
-        console.log("error", err);
-
-        resolve(false);
-      });
-
-      peerAnswer.rtc.on("connect", () => {
-        peerAnswer.connected();
-        this.mesh.addPeer(peerAnswer);
-        resolve(true);
-      });
-    });
   }
 
   offerFirst(socket) {
@@ -121,7 +77,9 @@ export default class PortalNode {
 
     peerOffer.rtc.on("connect", () => {
       peerOffer.connected();
-      this.mesh.addPeer(peerOffer);
+      setTimeout(() => {
+        this.mesh.addPeer(peerOffer);
+      }, 1 * 1000);      
     });
   }
 

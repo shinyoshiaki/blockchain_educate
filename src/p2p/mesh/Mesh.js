@@ -163,6 +163,7 @@ export default class Mesh {
         );
         break;
       case def.ON_LISTEN:
+        console.log("listen done");
         const targetList = json.data;
         this.connectPeers(targetList);
         break;

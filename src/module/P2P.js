@@ -1,4 +1,4 @@
-import PortalNode from "../p2p/mesh/PortalNode";
+import Node from "../p2p/mesh/Node";
 import BlockchainApp from "../p2p/blockchain/BlockchainApp";
 
 export const initialState = {
@@ -15,7 +15,7 @@ const actionType = {
 
 export function connectPortal(dispatch, p2p, input) {
   if (p2p.isFirst) {
-    const node = new PortalNode(
+    const node = new Node(
       input.myPort,
       input.targetAddress,
       input.targetPort,

@@ -21,7 +21,7 @@ export default class webrtc {
     }
 
     this.rtc.on("data", function(data) {
-      //console.log("from", this.targetId);
+      console.log("from", this.targetId, JSON.parse(data));
     });
   }
 
@@ -76,7 +76,7 @@ export default class webrtc {
 
   send(data) {
     try {
-      //  console.log("webrtc_send", data, "\ntarget", this.targetId);
+      console.log("webrtc_send", JSON.parse(data), "\ntarget", this.targetId);
       this.rtc.send(data);
       return true;
     } catch (error) {
