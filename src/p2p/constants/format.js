@@ -1,5 +1,5 @@
 import type from "./type";
-
+import sha1 from "sha1";
 /*
 p2ch communication model(layer)
 -------------------------------
@@ -10,6 +10,18 @@ transport
 presen
 app
 */
+
+export function packetFormat(type, data) {
+  let packet = {
+    layer: "networkLayer",
+    type: type,
+    data: data,
+    date: Date.now(),
+    hash: ""
+  };
+  packet.hash = sha1(JSON.stringify(packet));
+  return JSON.stringify(packet);
+}
 
 //transportLayer
 export function sendFormat(session, body) {

@@ -1,7 +1,5 @@
 "use strict";
 import WebRTC from "../lib/webrtc";
-import http from "http";
-import socketio from "socket.io";
 import client from "socket.io-client";
 import Mesh from "../mesh/Mesh";
 import sha1 from "sha1";
@@ -14,8 +12,6 @@ const def = {
   ONCOMMAND: "ONCOMMAND"
 };
 
-const BCHAIN_EDU = "BCHAIN_EDU";
-
 let peerOffer, peerAnswer;
 export default class PortalNode {
   constructor(myPort, targetAddress, targetPort, isLocal) {
@@ -25,16 +21,19 @@ export default class PortalNode {
     if (targetAddress != undefined && targetAddress.length > 0) {
       this.targetUrl = "http://" + targetAddress + ":" + targetPort;
     }
-    
+
     this.userId = sha1(Math.random().toString());
     console.log("userId", this.userId);
 
     this.mesh = new Mesh(this.userId);
     this.ev = new events.EventEmitter();
+
     this.mesh.ev.on(def.ONCOMMAND, datalinkLayer => {
-      if (datalinkLayer.toString().includes(BCHAIN_EDU)) {
-        const networkLayer = JSON.parse(datalinkLayer).data;
-        this.ev.emit(BCHAIN_EDU, networkLayer);
+      console.log("portal node oncommand", datalinkLayer);
+      if (JSON.stringify(datalinkLayer).includes("p2ch")) {
+        const networkLayer = datalinkLayer.data;
+        console.log("portal node oncommand", networkLayer);
+        this.ev.emit("p2ch", networkLayer);
       }
     });
 
@@ -49,7 +48,7 @@ export default class PortalNode {
       })();
     }
 
-    this.srv = http.Server();
+    /* this.srv = http.Server();
     this.io = socketio(this.srv);
     this.srv.listen(this.myPort);
 
@@ -57,7 +56,7 @@ export default class PortalNode {
       socket.on(def.OFFER, data => {
         this.answerFirst(data, socket.id);
       });
-    });
+    });*/
 
     if (this.targetUrl != undefined) {
       const socket = client.connect(this.targetUrl);
@@ -124,5 +123,9 @@ export default class PortalNode {
       peerOffer.connected();
       this.mesh.addPeer(peerOffer);
     });
+  }
+
+  send(data) {
+    this.mesh.broadCast("MESH_MESSAGE", data);
   }
 }

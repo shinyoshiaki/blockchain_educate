@@ -1,8 +1,7 @@
 import React from "react";
 import { render } from "react-dom";
+import Login from "./containers/Login";
 import App from "./containers/App";
-import App2ch from "./containers/2ch/App2ch";
-import Page2chThread from "./containers/2ch/Page2chThread";
 import { Provider } from "react-redux";
 import createStore from "./store/createStore";
 
@@ -15,9 +14,8 @@ render(
   <Provider store={data.store}>
     <ConnectedRouter history={data.history}>
       <div>
-        <Route exact path="/" component={App} />
-        <Route path="/2ch" component={App2ch} />
-        <Route path="/thread" component={Page2chThread} />
+        <Route exact path="/" component={Login} />
+        <Route path="/app" component={App} />
       </div>
     </ConnectedRouter>
   </Provider>,

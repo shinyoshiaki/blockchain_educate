@@ -1,6 +1,7 @@
 import WebRTC from "../lib/webrtc";
 import Events from "events";
 import sha1 from "sha1";
+import { packetFormat } from "../constants/format";
 
 export const def = {
   LISTEN: "LISTEN",
@@ -61,14 +62,7 @@ export default class Mesh {
   }
 
   broadCast(tag, data) {
-    const packet = {
-      type: def.BROADCAST,
-      data: { tag: tag, data, data },
-      date: Date.now(),
-      hash: ""
-    };
-    packet.hash = sha1(JSON.stringify(packet));
-    this.onBroadCast(JSON.stringify(packet));
+    this.onBroadCast(packetFormat(def.BROADCAST, { tag: tag, data, data }));
   }
 
   connectPeers(targetList) {
@@ -208,7 +202,7 @@ export default class Mesh {
               break;
             }
             case def.MESH_MESSAGE:
-              this.ev.emit(def.ONCOMMAND, broadcastData.data);
+              this.ev.emit(def.ONCOMMAND, broadcastData);
               break;
           }
         }

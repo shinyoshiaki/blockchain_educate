@@ -4,10 +4,10 @@ import * as format from "../constants/format";
 import Token from "./token";
 
 let nodeId;
-let connect;
+let node;
 
 export default class BlockchainApp {
-  constructor(id, _connect) {
+  constructor(id, _node) {
     nodeId = id;
     this.blockchain = new Blockchain(nodeId);
     this.token = new Token(id, this.blockchain);
@@ -18,10 +18,11 @@ export default class BlockchainApp {
       console.log("load blockchain", this.blockchain.chain);
     }
 
-    connect = _connect;
+    node = _node;
 
     //ブロックチェーンの更新
-    connect.ev.on("p2ch", networkLayer => {
+    node.ev.on("p2ch", networkLayer => {
+      console.log("blockchain app p2ch", networkLayer);
       const transportLayer = JSON.parse(networkLayer);
       console.log(
         "blockchainApp",
@@ -67,7 +68,7 @@ export default class BlockchainApp {
 
       this.saveChain();
 
-      connect.send(format.sendFormat(type.NEWBLOCK, block));
+      node.send(format.sendFormat(type.NEWBLOCK, block));
 
       resolve(block);
     });
@@ -83,7 +84,7 @@ export default class BlockchainApp {
     );
     console.log("makeTransaction", tran);
 
-    connect.send(format.sendFormat(type.TRANSACRION, tran));
+    node.send(format.sendFormat(type.TRANSACRION, tran));
   }
 
   getChain() {

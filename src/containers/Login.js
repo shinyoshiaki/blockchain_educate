@@ -1,27 +1,28 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Button, TextField, Typography } from "@material-ui/core";
-import { switchModalMakeThread } from "../../module/Ui";
+import { connectPortal } from "../module/P2P";
+import { onTransactionEvent } from "../module/Blockchain";
 
-let isLocal, myPort, targetAddress, targetPort;
+let targetAddress, targetPort;
 
-class Page2chMakeThread extends React.Component {
+class login extends React.Component {
   connectPortalNode = () => {
-    const { dispatch } = this.props;
-    switchModalMakeThread(dispatch);
+    const { dispatch, p2p } = this.props;
+    const data = connectPortal(dispatch, p2p, {
+      myPort: 20000,
+      targetAddress: targetAddress,
+      targetPort: targetPort,
+      isLocal: true
+    });
+    onTransactionEvent(dispatch, data.node, data.blockchain);
+    this.props.history.push("/app")
   };
 
   render() {
     return (
       <div>
         <Typography>{"login"}</Typography>
-        <TextField
-          label="is local ture or false"
-          onChange={e => (isLocal = e.target.value)}
-        />
-        <br />
-        <TextField label="my port" onChange={e => (myPort = e.target.value)} />
-        <br />
         <TextField
           label="target address"
           onChange={e => (targetAddress = e.target.value)}
@@ -32,13 +33,7 @@ class Page2chMakeThread extends React.Component {
           onChange={e => (targetPort = e.target.value)}
         />
         <br />
-        <Button
-          onClick={() => {
-            this.connectPortalNode();
-          }}
-        >
-          connect
-        </Button>
+        <Button onClick={this.connectPortalNode}>connect</Button>
       </div>
     );
   }
@@ -46,9 +41,8 @@ class Page2chMakeThread extends React.Component {
 
 const mapStateToProps = state => {
   return {
-    p2p: state.p2p,
-    twoCh: state.twoCh
+    p2p: state.p2p
   };
 };
 
-export default connect(mapStateToProps)(Page2chMakeThread);
+export default connect(mapStateToProps)(login);

@@ -13,7 +13,7 @@ const actionType = {
   CONNECT: "CONNECT"
 };
 
-export function connectKad(dispatch, p2p, input) {
+export function connectPortal(dispatch, p2p, input) {
   if (p2p.isFirst) {
     const node = new PortalNode(
       input.myPort,
@@ -23,7 +23,7 @@ export function connectKad(dispatch, p2p, input) {
     );
     const data = {
       node: node,
-      blockchain: new BlockchainApp(userId, node)
+      blockchain: new BlockchainApp(node.userId, node)
     };
     dispatch({ type: actionType.CONNECT, data: data });
     return data;
