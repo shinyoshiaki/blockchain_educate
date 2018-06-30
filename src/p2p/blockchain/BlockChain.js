@@ -88,7 +88,7 @@ class Blockchain {
     //リセット
     this.currentTransactions = [];
 
-    console.log("chain", this.chain);
+    console.log("my new block", block);
 
     return block;
   }
@@ -113,17 +113,20 @@ class Blockchain {
     const publicKey = block.publicKey;
     block.sign = "";
 
+    console.log("check valid block", lastProof, block.proof, lastHash, owner);
+
     if (this.validProof(lastProof, block.proof, lastHash, owner)) {
       console.log("blockchain", "is  valid block");
       if (this.cypher.decrypt(sign, publicKey) === this.hash(block)) {
         console.log("is valid sign");
+        block.sign = sign;
         return true;
       } else {
         console.log("is not valid sign");
         return false;
       }
     } else {
-      console.log("blockchain", "is not valid block");
+      console.log("blockchain", "is not valid block", block);
       return false;
     }
   }
@@ -182,6 +185,7 @@ class Blockchain {
       const balance = this.nowAmount(address);
       if (balance > amount) {
         console.log("valid transaction balance");
+        transaction.sign = sign;
         return true;
       } else {
         console.log("not valid transaction no balance", balance, amount);
@@ -225,7 +229,7 @@ class Blockchain {
   }
 
   validChain(chain) {
-    let index = 1;
+    let index = 2;
 
     while (index < chain.length) {
       const previousBlock = chain[index - 1];
@@ -245,12 +249,13 @@ class Blockchain {
           block.owner
         )
       ) {
+        console.log("not valid chain");
         return false;
       }
 
       index++;
     }
-
+    console.log("valid chain");
     return true;
   }
 }

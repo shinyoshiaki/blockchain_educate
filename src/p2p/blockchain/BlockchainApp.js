@@ -24,7 +24,6 @@ export default class BlockchainApp {
 
     node = _node;
 
-    //ブロックチェーンの更新
     node.ev.on("p2ch", networkLayer => {
       const transportLayer = JSON.parse(networkLayer);
       console.log("blockchainApp", "p2ch", transportLayer);
@@ -34,11 +33,17 @@ export default class BlockchainApp {
 
       switch (transportLayer.session) {
         case type.NEWBLOCK:
-          console.log("blockchainApp", "new block");
-          (async () => {
-            await this.checkConflicts();
+          console.log("blockchainApp", "new block", body);
+          if (
+            body.index > this.blockchain.chain.length + 1 ||
+            this.blockchain.chain.length == 1
+          ) {
+            (async () => {
+              await this.checkConflicts();
+            })();
+          } else {
             this.blockchain.addBlock(body);
-          })();
+          }
           break;
         case type.TRANSACRION:
           console.log("blockchainApp transaction", body);
@@ -82,7 +87,10 @@ export default class BlockchainApp {
         if (this.blockchain.chain.length < body.length) {
           console.log("conflict my chain short");
           if (this.blockchain.validChain(body)) {
+            console.log("conflict swap chain");
             this.blockchain.chain = body;
+          } else {
+            console.log("conflict wrong chain");
           }
         }
         resolve(true);

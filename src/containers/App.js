@@ -6,7 +6,6 @@ import TextPeers from "../components/main/TextPeers";
 import TextUserId from "../components/main/TextUserId";
 import TextNodeId from "../components/main/TextNodeId";
 import FormTransaction from "../containers/main/FormTransaction";
-import { Typography } from "@material-ui/core";
 
 class App extends Component {
   render() {
