@@ -82,8 +82,7 @@ export default class Node {
     });
   }
 
-  broadCast(data) {
-    console.log("node broadcast", data);
+  broadCast(data) {    
     this.mesh.broadCast(def.MESH_MESSAGE, data);
   }
 

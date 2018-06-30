@@ -168,7 +168,8 @@ export default class Mesh {
         this.connectPeers(targetList);
         break;
       case def.MESH_MESSAGE:
-        this.ev.emit(def.ONCOMMAND, json.data);
+        console.log("mesh message", json);
+        this.ev.emit(def.ONCOMMAND, json);
         break;
       case def.BROADCAST:
         if (this.onBroadCast(packet)) {

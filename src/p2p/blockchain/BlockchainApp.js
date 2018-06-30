@@ -1,14 +1,20 @@
 import Blockchain from "./BlockChain";
 import type from "../constants/type";
 import * as format from "../constants/format";
+import Events from "events";
 
 let nodeId;
 let node;
+
+const def = {
+  ONCOMMAND: "ONCOMMAND"
+};
 
 export default class BlockchainApp {
   constructor(id, _node) {
     nodeId = id;
     this.blockchain = new Blockchain();
+    this.ev = new Events.EventEmitter();
 
     let local = localStorage.getItem(type.BLOCKCHAIN);
     if (local !== null && local.length > 0) {
@@ -20,38 +26,37 @@ export default class BlockchainApp {
 
     //ブロックチェーンの更新
     node.ev.on("p2ch", networkLayer => {
-      console.log("blockchain app p2ch", networkLayer);
       const transportLayer = JSON.parse(networkLayer);
       console.log("blockchainApp", "p2ch", transportLayer);
+
+      this.ev.emit(transportLayer.session, transportLayer.body);
+      const body = transportLayer.body;
 
       switch (transportLayer.session) {
         case type.NEWBLOCK:
           console.log("blockchainApp", "new block");
           (async () => {
             await this.checkConflicts();
-            const block = transportLayer.body;
-            this.blockchain.addBlock(block);
+            this.blockchain.addBlock(body);
           })();
           break;
         case type.TRANSACRION:
-          console.log("blockchainApp transaction", transportLayer.body);
-          const transaction = transportLayer.body;
+          console.log("blockchainApp transaction", body);
           if (
             !JSON.stringify(this.blockchain.currentTransactions).includes(
-              JSON.stringify(transaction)
+              JSON.stringify(body)
             )
           ) {
             console.log("transaction added");
-            this.blockchain.addTransaction(transaction);
+            this.blockchain.addTransaction(body);
           }
           break;
         case type.CONFLICT:
           console.log("blockchain app check conflict");
-          const conflict = transportLayer.body;
-          if (this.blockchain.chain.length > conflict.size) {
+          if (this.blockchain.chain.length > body.size) {
             console.log("blockchain app check is conflict");
             node.send(
-              conflict.nodeId,
+              body.nodeId,
               format.sendFormat(type.RESOLVE_CONFLICT, this.blockchain.chain)
             );
           }
@@ -72,20 +77,15 @@ export default class BlockchainApp {
           size: this.blockchain.chain.length
         })
       );
-      node.ev.on("p2ch", networkLayer => {
-        const transportLayer = JSON.parse(networkLayer);
-        switch (transportLayer.session) {
-          case type.RESOLVE_CONFLICT:
-            console.log("resolve conflict");
-            const resolveConflict = transportLayer.body;
-            if (this.blockchain.chain.length < resolveConflict.length) {
-              if (this.blockchain.validChain(resolveConflict)) {
-                this.blockchain.chain = resolveConflict;
-              }
-            }
-            resolve(true);
-            break;
+      this.ev.on(type.RESOLVE_CONFLICT, body => {
+        console.log("resolve conflict");
+        if (this.blockchain.chain.length < body.length) {
+          console.log("conflict my chain short");
+          if (this.blockchain.validChain(body)) {
+            this.blockchain.chain = body;
+          }
         }
+        resolve(true);
       });
     });
   }

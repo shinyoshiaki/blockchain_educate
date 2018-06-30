@@ -23,7 +23,7 @@ class Blockchain {
     this.publicKey = this.cypher.publicKey;
     this.secretKey = this.cypher.secretKey;
     this.address = getSHA256HexString(this.cypher.publicKey);
-    this.newBlock(100, "1");
+    this.genesisBlock();
   }
 
   hash(obj) {
@@ -33,7 +33,13 @@ class Blockchain {
   }
 
   genesisBlock() {
-    this.newTransaction(type.SYSTEM, "genesis", 1, type.REWORD);
+    this.newTransaction(
+      type.SYSTEM,
+      "genesis",
+      1,
+      type.REWORD,
+      "genesis block"
+    );
 
     const block = {
       index: this.chain.length + 1,
@@ -115,6 +121,7 @@ class Blockchain {
   }
 
   newTransaction(sender, recipient, amount, data) {
+    console.log("new transaction recipent", recipient);
     const tran = {
       sender: sender,
       recipient: recipient,
@@ -131,6 +138,7 @@ class Blockchain {
   }
 
   nowAmount(address = this.address) {
+    console.log("nouAmount target", address);
     let tokenNum = new Decimal(0.0);
     this.chain.forEach(block => {
       block.transactions.forEach(transaction => {
@@ -157,7 +165,9 @@ class Blockchain {
     const amount = transaction.amount;
     const sign = transaction.sign;
     const publicKey = transaction.publicKey;
-    const address = transaction.address;
+
+    const address = transaction.sender;
+
     transaction.sign = "";
     if (this.cypher.decrypt(sign, publicKey) === this.hash(transaction)) {
       console.log("valid transaction sign");
