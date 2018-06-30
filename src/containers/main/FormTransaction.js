@@ -30,6 +30,7 @@ class FormTransaction extends Component {
         >
           send
         </Button>
+        <Divider />
       </div>
     );
   }

@@ -1,6 +1,5 @@
 import WebRTC from "../lib/webrtc";
 import Events from "events";
-import sha1 from "sha1";
 import { packetFormat } from "../constants/format";
 
 export const def = {
@@ -11,6 +10,10 @@ export const def = {
   MESH_ANSWER: "MESH_ANSWER",
   MESH_MESSAGE: "MESH_MESSAGE",
   ONCOMMAND: "ONCOMMAND"
+};
+
+export const action = {
+  PEER: "PEER"
 };
 
 export default class Mesh {
@@ -38,6 +41,7 @@ export default class Mesh {
     );
     this.peerList[peer.targetId] = peer;
     console.log("added peer", this.getAllPeerId());
+    this.ev.emit(action.PEER);
   }
 
   getAllPeerId() {

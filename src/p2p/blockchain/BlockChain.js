@@ -1,6 +1,7 @@
 import SHA256 from "sha256";
 import { Decimal } from "decimal.js";
 import Cypher from "../lib/cypher";
+import Events from "events";
 
 function getSHA256HexString(input) {
   return SHA256(input).toString();
@@ -14,6 +15,11 @@ const type = {
   NEWBLOCK: "NEWBLOCK"
 };
 
+const action = {
+  TRANSACTION: "TRANSACTION",
+  BLOCK: "BLOCK"
+};
+
 class Blockchain {
   constructor(secretKey, publicKey) {
     this.chain = [];
@@ -24,6 +30,7 @@ class Blockchain {
     this.secretKey = this.cypher.secretKey;
     this.address = getSHA256HexString(this.cypher.publicKey);
     this.genesisBlock();
+    this.ev = new Events.EventEmitter();
   }
 
   hash(obj) {
@@ -94,6 +101,7 @@ class Blockchain {
 
       console.log("chain", this.chain);
     }
+    this.ev.emit(action.BLOCK);
   }
 
   validBlock(block) {
@@ -188,6 +196,7 @@ class Blockchain {
     if (this.validTransaction(tran)) {
       this.currentTransactions.push(tran);
     }
+    this.ev.emit(action.TRANSACTION);
   }
 
   lastBlock(blockchain = this.chain) {

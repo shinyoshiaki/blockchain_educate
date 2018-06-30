@@ -6,8 +6,8 @@ class TextToken extends Component {
     const { p2p } = this.props;
     return (
       <div>
-        <Typography>blockchain address</Typography>
-        <Typography>{p2p.address}</Typography>
+        <Typography>node id</Typography>
+        <Typography>{p2p.nodeId}</Typography>
         <br />
       </div>
     );

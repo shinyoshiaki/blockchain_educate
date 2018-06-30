@@ -1,5 +1,6 @@
 import Node from "../p2p/mesh/Node";
 import BlockchainApp from "../p2p/blockchain/BlockchainApp";
+import { action } from "../p2p/mesh/Mesh";
 
 export const initialState = {
   isFirst: true,
@@ -7,11 +8,13 @@ export const initialState = {
   nodeId: "",
   address: "",
   blockchainApp: undefined,
-  transportLayer: undefined
+  transportLayer: undefined,
+  peerIdList: []
 };
 
 const actionType = {
-  CONNECT: "CONNECT"
+  CONNECT: "CONNECT",
+  ADDPEER: "ADDPEER"
 };
 
 export function connectPortal(dispatch, p2p, input) {
@@ -31,6 +34,15 @@ export function connectPortal(dispatch, p2p, input) {
   } else return null;
 }
 
+export function onAddPeerEvent(dispatch, mesh) {
+  mesh.ev.on(action.PEER, () => {
+    dispatch({
+      type: actionType.ADDPEER,
+      data: mesh.getAllPeerId()
+    });
+  });
+}
+
 export default function reducer(state = initialState, action) {
   switch (action.type) {
     case actionType.CONNECT:
@@ -41,6 +53,11 @@ export default function reducer(state = initialState, action) {
         nodeId: action.data.node.nodeId,
         address: action.data.blockchainApp.blockchain.address,
         isFirst: false
+      };
+    case actionType.ADDPEER:
+      return {
+        ...state,
+        peerIdList: action.data
       };
     default:
       return state;
