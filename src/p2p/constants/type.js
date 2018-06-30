@@ -7,6 +7,8 @@ export default {
   SYSTEM: "SYSTEM",
   APP: "APP",
   NEWBLOCK: "NEWBLOCK",
+  CONFLICT: "CONFLICT",
+  RESOLVE_CONFLICT: "RESOLVE_CONFLICT",
 
   //kademlia
   STORE: "STORE",

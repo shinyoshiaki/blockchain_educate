@@ -4,8 +4,9 @@ import BlockchainApp from "../p2p/blockchain/BlockchainApp";
 export const initialState = {
   isFirst: true,
   node: undefined,
-  userId: "",
-  blockchain: undefined,
+  nodeId: "",
+  address: "",
+  blockchainApp: undefined,
   transportLayer: undefined
 };
 
@@ -23,7 +24,7 @@ export function connectPortal(dispatch, p2p, input) {
     );
     const data = {
       node: node,
-      blockchain: new BlockchainApp(node.userId, node)
+      blockchainApp: new BlockchainApp(node.nodeId, node)
     };
     dispatch({ type: actionType.CONNECT, data: data });
     return data;
@@ -36,8 +37,9 @@ export default function reducer(state = initialState, action) {
       return {
         ...state,
         node: action.data.node,
-        blockchain: action.data.blockchain,
-        userId: action.data.node.userId,
+        blockchainApp: action.data.blockchainApp,
+        nodeId: action.data.node.nodeId,
+        address: action.data.blockchainApp.blockchain.address,
         isFirst: false
       };
     default:

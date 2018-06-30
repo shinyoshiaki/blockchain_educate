@@ -1,7 +1,6 @@
 import Blockchain from "./BlockChain";
 import type from "../constants/type";
 import * as format from "../constants/format";
-import Token from "./token";
 
 let nodeId;
 let node;
@@ -9,8 +8,7 @@ let node;
 export default class BlockchainApp {
   constructor(id, _node) {
     nodeId = id;
-    this.blockchain = new Blockchain(nodeId);
-    this.token = new Token(id, this.blockchain);
+    this.blockchain = new Blockchain();
 
     let local = localStorage.getItem(type.BLOCKCHAIN);
     if (local !== null && local.length > 0) {
@@ -24,35 +22,71 @@ export default class BlockchainApp {
     node.ev.on("p2ch", networkLayer => {
       console.log("blockchain app p2ch", networkLayer);
       const transportLayer = JSON.parse(networkLayer);
-      console.log(
-        "blockchainApp",
-        "p2ch",
-        transportLayer,
-        "\n",
-        transportLayer.session
-      );
+      console.log("blockchainApp", "p2ch", transportLayer);
 
-      if (transportLayer.session === type.NEWBLOCK) {
-        console.log("blockchainApp", "get newblock");
-        const block = transportLayer.body;
-        this.blockchain.addBlock(block);
-      } else if (transportLayer.session === type.TRANSACRION) {
-        console.log(
-          "blockchainApp transaction",
-          transportLayer.body,
-          "\n",
-          JSON.stringify(this.blockchain.currentTransactions)
-        );
-        const transaction = transportLayer.body;
-        if (
-          !JSON.stringify(this.blockchain.currentTransactions).includes(
-            JSON.stringify(transaction)
-          )
-        ) {
-          console.log("transaction added");
-          this.blockchain.addTransaction(transaction);
-        }
+      switch (transportLayer.session) {
+        case type.NEWBLOCK:
+          console.log("blockchainApp", "new block");
+          (async () => {
+            await this.checkConflicts();
+            const block = transportLayer.body;
+            this.blockchain.addBlock(block);
+          })();
+          break;
+        case type.TRANSACRION:
+          console.log("blockchainApp transaction", transportLayer.body);
+          const transaction = transportLayer.body;
+          if (
+            !JSON.stringify(this.blockchain.currentTransactions).includes(
+              JSON.stringify(transaction)
+            )
+          ) {
+            console.log("transaction added");
+            this.blockchain.addTransaction(transaction);
+          }
+          break;
+        case type.CONFLICT:
+          console.log("blockchain app check conflict");
+          const conflict = transportLayer.body;
+          if (this.blockchain.chain.length > conflict.size) {
+            console.log("blockchain app check is conflict");
+            node.send(
+              conflict.nodeId,
+              format.sendFormat(type.RESOLVE_CONFLICT, this.blockchain.chain)
+            );
+          }
+          break;
       }
+    });
+  }
+
+  checkConflicts() {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(false);
+      }, 4 * 1000);
+      console.log("this.checkConflicts");
+      node.broadCast(
+        format.sendFormat(type.CONFLICT, {
+          nodeId: nodeId,
+          size: this.blockchain.chain.length
+        })
+      );
+      node.ev.on("p2ch", networkLayer => {
+        const transportLayer = JSON.parse(networkLayer);
+        switch (transportLayer.session) {
+          case type.RESOLVE_CONFLICT:
+            console.log("resolve conflict");
+            const resolveConflict = transportLayer.body;
+            if (this.blockchain.chain.length < resolveConflict.length) {
+              if (this.blockchain.validChain(resolveConflict)) {
+                this.blockchain.chain = resolveConflict;
+              }
+            }
+            resolve(true);
+            break;
+        }
+      });
     });
   }
 
@@ -68,7 +102,7 @@ export default class BlockchainApp {
 
       this.saveChain();
 
-      node.send(format.sendFormat(type.NEWBLOCK, block));
+      node.broadCast(format.sendFormat(type.NEWBLOCK, block));
 
       resolve(block);
     });
@@ -77,14 +111,14 @@ export default class BlockchainApp {
   //sessionLayer
   makeTransaction(recipient, amount, data) {
     const tran = this.blockchain.newTransaction(
-      nodeId,
+      this.blockchain.address,
       recipient,
       amount,
       data
     );
     console.log("makeTransaction", tran);
 
-    node.send(format.sendFormat(type.TRANSACRION, tran));
+    node.broadCast(format.sendFormat(type.TRANSACRION, tran));
   }
 
   getChain() {

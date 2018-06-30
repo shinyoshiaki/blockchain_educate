@@ -5,7 +5,7 @@ class TextToken extends Component {
     const { p2p } = this.props;
     return (
       <div>
-        {p2p.userId}
+        {p2p.address}
         <br />
       </div>
     );

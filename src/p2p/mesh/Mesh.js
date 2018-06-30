@@ -14,9 +14,9 @@ export const def = {
 };
 
 export default class Mesh {
-  constructor(userId) {
+  constructor(nodeId) {
     this.ev = new Events.EventEmitter();
-    this.userId = userId;
+    this.nodeId = nodeId;
     this.peerList = {};
     this.packetIdList = [];
     this.ref = {};
@@ -33,7 +33,7 @@ export default class Mesh {
     peer.send(
       JSON.stringify({
         type: def.LISTEN,
-        id: this.userId
+        id: this.nodeId
       })
     );
     this.peerList[peer.targetId] = peer;
@@ -70,7 +70,7 @@ export default class Mesh {
       (async () => {
         this.state.isConnectPeers = true;
         for (let target of targetList) {
-          if (!this.getAllPeerId().includes(target) && target !== this.userId) {
+          if (!this.getAllPeerId().includes(target) && target !== this.nodeId) {
             this.ref.peer = new WebRTC("offer");
             await this.offer(target, this.ref);
           }
@@ -97,7 +97,7 @@ export default class Mesh {
         console.log(" offer store", target);
 
         this.broadCast(def.MESH_OFFER, {
-          from: this.userId,
+          from: this.nodeId,
           to: target,
           sdp: sdp
         });
@@ -129,7 +129,7 @@ export default class Mesh {
 
       r.peer.rtc.on("signal", sdp => {
         this.broadCast(def.MESH_ANSWER, {
-          from: this.userId,
+          from: this.nodeId,
           to: target,
           sdp: sdp
         });
@@ -167,6 +167,9 @@ export default class Mesh {
         const targetList = json.data;
         this.connectPeers(targetList);
         break;
+      case def.MESH_MESSAGE:
+        this.ev.emit(def.ONCOMMAND, json.data);
+        break;
       case def.BROADCAST:
         if (this.onBroadCast(packet)) {
           const broadcastData = json.data;
@@ -174,7 +177,7 @@ export default class Mesh {
           switch (broadcastData.tag) {
             case def.MESH_OFFER: {
               const to = broadcastData.data.to;
-              if (to === this.userId) {
+              if (to === this.nodeId) {
                 const from = broadcastData.data.from;
                 const sdp = broadcastData.data.sdp;
                 if (!this.state.isMeshAnswer) {
@@ -195,7 +198,7 @@ export default class Mesh {
             }
             case def.MESH_ANSWER: {
               const to = broadcastData.data.to;
-              if (to === this.userId) {
+              if (to === this.nodeId) {
                 const sdp = broadcastData.data.sdp;
                 console.log("on mesh answer to me");
                 this.ref.peer.rtc.signal(sdp);

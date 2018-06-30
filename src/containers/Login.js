@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import { Button, TextField, Typography } from "@material-ui/core";
 import { connectPortal } from "../module/P2P";
 import { onTransactionEvent } from "../module/Blockchain";
+import BtnClean from "../components/main/BtnClean";
 
 let targetAddress, targetPort;
 
@@ -15,8 +16,8 @@ class login extends React.Component {
       targetPort: targetPort,
       isLocal: true
     });
-    onTransactionEvent(dispatch, data.node, data.blockchain);
-    this.props.history.push("/app")
+    onTransactionEvent(dispatch, data.node, data.blockchainApp);
+    this.props.history.push("/app");
   };
 
   render() {
@@ -34,6 +35,8 @@ class login extends React.Component {
         />
         <br />
         <Button onClick={this.connectNode}>connect</Button>
+        <br />
+        <BtnClean />
       </div>
     );
   }

@@ -9,6 +9,7 @@ import events from "events";
 const def = {
   OFFER: "OFFER",
   ANSWER: "ANSWER",
+  MESH_MESSAGE: "MESH_MESSAGE",
   ONCOMMAND: "ONCOMMAND"
 };
 
@@ -22,17 +23,15 @@ export default class Node {
       this.targetUrl = "http://" + targetAddress + ":" + targetPort;
     }
 
-    this.userId = sha1(Math.random().toString());
-    console.log("userId", this.userId);
+    this.nodeId = sha1(Math.random().toString());
+    console.log("nodeId", this.nodeId);
 
-    this.mesh = new Mesh(this.userId);
+    this.mesh = new Mesh(this.nodeId);
     this.ev = new events.EventEmitter();
 
-    this.mesh.ev.on(def.ONCOMMAND, datalinkLayer => {
-      console.log("portal node oncommand", datalinkLayer);
+    this.mesh.ev.on(def.ONCOMMAND, datalinkLayer => {      
       if (JSON.stringify(datalinkLayer).includes("p2ch")) {
-        const networkLayer = datalinkLayer.data;
-        console.log("portal node oncommand", networkLayer);
+        const networkLayer = datalinkLayer.data;        
         this.ev.emit("p2ch", networkLayer);
       }
     });
@@ -58,7 +57,7 @@ export default class Node {
 
       socket.on(def.ANSWER, data => {
         peerOffer.rtc.signal(data.sdp);
-        peerOffer.connecting(data.userId);
+        peerOffer.connecting(data.nodeId);
       });
     }
   }
@@ -70,7 +69,7 @@ export default class Node {
     peerOffer.rtc.on("signal", sdp => {
       socket.emit(def.OFFER, {
         type: def.OFFER,
-        userId: this.userId,
+        nodeId: this.nodeId,
         sdp: sdp
       });
     });
@@ -79,11 +78,22 @@ export default class Node {
       peerOffer.connected();
       setTimeout(() => {
         this.mesh.addPeer(peerOffer);
-      }, 1 * 1000);      
+      }, 1 * 1000);
     });
   }
 
-  send(data) {
-    this.mesh.broadCast("MESH_MESSAGE", data);
+  broadCast(data) {
+    console.log("node broadcast", data);
+    this.mesh.broadCast(def.MESH_MESSAGE, data);
+  }
+
+  send(target, data) {    
+    for (let key in this.mesh.peerList) {
+      console.log(key);
+    }
+    console.log(this.mesh.peerList[target]);
+    this.mesh.peerList[target].send(
+      JSON.stringify({ type: def.MESH_MESSAGE, data: data })
+    );
   }
 }

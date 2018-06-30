@@ -1,4 +1,6 @@
 import SHA256 from "sha256";
+import { Decimal } from "decimal.js";
+import Cypher from "../lib/cypher";
 
 function getSHA256HexString(input) {
   return SHA256(input).toString();
@@ -13,43 +15,65 @@ const type = {
 };
 
 class Blockchain {
-  constructor(_id) {
+  constructor(secretKey, publicKey) {
     this.chain = [];
     this.currentTransactions = [];
     this.nodes = new Set();
-    this.id = _id;
-
-    // Create the genesis block
+    this.cypher = new Cypher(secretKey, publicKey);
+    this.publicKey = this.cypher.publicKey;
+    this.secretKey = this.cypher.secretKey;
+    this.address = getSHA256HexString(this.cypher.publicKey);
     this.newBlock(100, "1");
   }
 
-  hash(block) {
-    // We must make sure that the attributes are ordered, or we'll have inconsistent hashes
-    //
-    const blockString = JSON.stringify(block, Object.keys(block).sort());
+  hash(obj) {
+    const objString = JSON.stringify(obj, Object.keys(obj).sort());
 
-    // Return the hash in hex format
+    return getSHA256HexString(objString);
+  }
 
-    return getSHA256HexString(blockString);
+  genesisBlock() {
+    this.newTransaction(type.SYSTEM, "genesis", 1, type.REWORD);
+
+    const block = {
+      index: this.chain.length + 1,
+      timestamp: Date.now(),
+      transactions: this.currentTransactions,
+      proof: 0,
+      previousHash: "genesis",
+      owner: "genesis",
+      publicKey: "genesis",
+      sign: ""
+    };
+    block.sign = this.cypher.encrypt(this.hash(block));
+    this.chain.push(block);
+
+    this.currentTransactions = [];
+
+    console.log("genesis block", this.chain);
+
+    return block;
   }
 
   newBlock(proof, previousHash) {
+    //採掘報酬
+    this.newTransaction(type.SYSTEM, this.address, 1, type.REWORD);
+
     const block = {
       index: this.chain.length + 1,
       timestamp: Date.now(),
       transactions: this.currentTransactions,
       proof: proof,
-      //"||"はもし後ろのものが存在すれば代入
       previousHash: previousHash || this.hash(this.lastBlock()),
-      owner: this.id
+      owner: this.address,
+      publicKey: this.publicKey,
+      sign: ""
     };
-
-    //採掘報酬
-    this.newTransaction(type.SYSTEM, this.id, 1, type.REWORD);
-
-    // Reset the current list of transactions
-    this.currentTransactions = [];
+    block.sign = this.cypher.encrypt(this.hash(block));
     this.chain.push(block);
+
+    //リセット
+    this.currentTransactions = [];
 
     console.log("chain", this.chain);
 
@@ -71,10 +95,19 @@ class Blockchain {
     const lastProof = lastBlock.proof;
     const lastHash = this.hash(lastBlock);
     const owner = block.owner;
+    const sign = block.sign;
+    const publicKey = block.publicKey;
+    block.sign = "";
 
     if (this.validProof(lastProof, block.proof, lastHash, owner)) {
       console.log("blockchain", "is  valid block");
-      return true;
+      if (this.cypher.decrypt(sign, publicKey) === this.hash(block)) {
+        console.log("is valid sign");
+        return true;
+      } else {
+        console.log("is not valid sign");
+        return false;
+      }
     } else {
       console.log("blockchain", "is not valid block");
       return false;
@@ -82,21 +115,69 @@ class Blockchain {
   }
 
   newTransaction(sender, recipient, amount, data) {
-    const now = Date.now();
     const tran = {
-      sender,
-      recipient,
-      amount,
-      data,
-      now
+      sender: sender,
+      recipient: recipient,
+      amount: amount,
+      data: data,
+      now: Date.now(),
+      publicKey: this.publicKey,
+      sign: ""
     };
+    tran.sign = this.cypher.encrypt(this.hash(tran));
     this.currentTransactions.push(tran);
 
     return tran;
   }
 
+  nowAmount(address = this.address) {
+    let tokenNum = new Decimal(0.0);
+    this.chain.forEach(block => {
+      block.transactions.forEach(transaction => {
+        if (transaction.recipient === address) {
+          tokenNum = tokenNum.plus(new Decimal(parseFloat(transaction.amount)));
+        } else if (transaction.sender === address) {
+          tokenNum = tokenNum.minus(
+            new Decimal(parseFloat(transaction.amount))
+          );
+        }
+      });
+    });
+    this.currentTransactions.forEach(transaction => {
+      if (transaction.recipient === address) {
+        tokenNum = tokenNum.plus(new Decimal(parseFloat(transaction.amount)));
+      } else if (transaction.sender === address) {
+        tokenNum = tokenNum.minus(new Decimal(parseFloat(transaction.amount)));
+      }
+    });
+    return tokenNum.toNumber();
+  }
+
+  validTransaction(transaction) {
+    const amount = transaction.amount;
+    const sign = transaction.sign;
+    const publicKey = transaction.publicKey;
+    const address = transaction.address;
+    transaction.sign = "";
+    if (this.cypher.decrypt(sign, publicKey) === this.hash(transaction)) {
+      console.log("valid transaction sign");
+      const balance = this.nowAmount(address);
+      if (balance > amount) {
+        console.log("valid transaction balance");
+        return true;
+      } else {
+        console.log("not valid transaction no balance", balance, amount);
+        return false;
+      }
+    } else {
+      console.log("not valid transaction sign");
+    }
+  }
+
   addTransaction(tran) {
-    this.currentTransactions.push(tran);
+    if (this.validTransaction(tran)) {
+      this.currentTransactions.push(tran);
+    }
   }
 
   lastBlock(blockchain = this.chain) {
@@ -110,15 +191,15 @@ class Blockchain {
 
     let proof = 0;
 
-    while (!this.validProof(lastProof, proof, lastHash, this.id)) {
+    while (!this.validProof(lastProof, proof, lastHash, this.address)) {
       proof++;
     }
 
     return proof;
   }
 
-  validProof(lastProof, proof, lastHash, id) {
-    const guess = `${lastProof}${proof}${lastHash}${id}`;
+  validProof(lastProof, proof, lastHash, address) {
+    const guess = `${lastProof}${proof}${lastHash}${address}`;
     const guessHash = getSHA256HexString(guess);
 
     return diff.test(guessHash);
@@ -153,13 +234,6 @@ class Blockchain {
 
     return true;
   }
-
-  /**
-   * This is our Consensus Algorithm, it resolves conflicts
-   * by replacing our chain with the longest one in the network.
-   * @returns {Promise} Resolves with true if the chain is updated, else false
-   */
-  resolveConflicts() {}
 }
 
 export default Blockchain;

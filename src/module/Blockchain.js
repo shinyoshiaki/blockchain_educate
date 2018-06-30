@@ -20,21 +20,21 @@ export function mining(dispatch, p2p) {
     dispatch({ type: actionType.MINING_SUCCESS, data: data });
   }
 
-  const blockchainApp = p2p.blockchain;
+  const blockchainApp = p2p.blockchainApp;
   miningRequest(dispatch);
   async function sync() {
     await blockchainApp.mine();
-    miningSuccess(dispatch, blockchainApp.token.nowAmount());
+    miningSuccess(dispatch, blockchainApp.blockchain.nowAmount());
   }
   sync();
 }
 
 export function transaction(dispatch, p2p, targetAddress, amount) {
-  const blockchainApp = p2p.blockchain;
+  const blockchainApp = p2p.blockchainApp;
   blockchainApp.makeTransaction(targetAddress, amount);
   dispatch({
     type: actionType.TRANSACTION,
-    data: blockchainApp.token.nowAmount()
+    data: blockchainApp.blockchain.nowAmount()
   });
 }
 
@@ -44,7 +44,7 @@ export function onTransactionEvent(dispatch, node, blockchainApp) {
     if ((transportLayer.type = type.BLOCKCHAIN)) {
       dispatch({
         type: actionType.TRANSACTION,
-        data: blockchainApp.token.nowAmount()
+        data: blockchainApp.blockchain.nowAmount()
       });
     }
   });
