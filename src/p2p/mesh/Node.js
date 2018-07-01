@@ -1,4 +1,3 @@
-"use strict";
 import WebRTC from "../lib/webrtc";
 import client from "socket.io-client";
 import Mesh from "../mesh/Mesh";

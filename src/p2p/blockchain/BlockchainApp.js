@@ -6,10 +6,6 @@ import Events from "events";
 let nodeId;
 let node;
 
-const def = {
-  ONCOMMAND: "ONCOMMAND"
-};
-
 export default class BlockchainApp {
   constructor(id, _node) {
     nodeId = id;
@@ -36,7 +32,7 @@ export default class BlockchainApp {
           console.log("blockchainApp", "new block", body);
           if (
             body.index > this.blockchain.chain.length + 1 ||
-            this.blockchain.chain.length == 1
+            this.blockchain.chain.length === 1
           ) {
             (async () => {
               await this.checkConflicts();
@@ -65,6 +61,8 @@ export default class BlockchainApp {
               format.sendFormat(type.RESOLVE_CONFLICT, this.blockchain.chain)
             );
           }
+          break;
+        default:
           break;
       }
     });

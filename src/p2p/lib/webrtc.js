@@ -18,10 +18,12 @@ export default class webrtc {
         console.log("webrtc", "answer");
         this.initAnswer();
         break;
+      default:
+        break;
     }
 
     this.rtc.on("data", function(data) {
-      console.log("webrtc received",  JSON.parse(data));
+      console.log("webrtc received", JSON.parse(data));
     });
   }
 

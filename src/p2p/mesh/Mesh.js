@@ -66,7 +66,7 @@ export default class Mesh {
   }
 
   broadCast(tag, data) {
-    this.onBroadCast(packetFormat(def.BROADCAST, { tag: tag, data, data }));
+    this.onBroadCast(packetFormat(def.BROADCAST, { tag: tag, data: data }));
   }
 
   connectPeers(targetList) {
@@ -153,6 +153,17 @@ export default class Mesh {
     });
   }
 
+  cleanPeers() {
+    const deleteList = [];
+    for (let key in this.peerList) {
+      if (this.peerList[key].isDisconnected) deleteList.push(key);
+    }
+    //console.log("delete list", deleteList);
+    deleteList.forEach(v => {
+      delete this.peerList[v];
+    });
+  }
+
   onCommand(packet) {
     const json = JSON.parse(packet);
     const type = json.type;
@@ -213,9 +224,14 @@ export default class Mesh {
             case def.MESH_MESSAGE:
               this.ev.emit(def.ONCOMMAND, broadcastData);
               break;
+            default:
+              break;
           }
         }
         break;
+      default:
+        break;
     }
+    this.cleanPeers();
   }
 }

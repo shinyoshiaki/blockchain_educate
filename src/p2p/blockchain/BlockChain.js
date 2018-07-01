@@ -9,13 +9,13 @@ function getSHA256HexString(input) {
 
 const diff = /^0000/;
 
-const type = {
+export const type = {
   SYSTEM: "SYSTEM",
   REWORD: "REWORD",
   NEWBLOCK: "NEWBLOCK"
 };
 
-const action = {
+export const action = {
   TRANSACTION: "TRANSACTION",
   BLOCK: "BLOCK"
 };
@@ -28,44 +28,16 @@ class Blockchain {
     this.cypher = new Cypher(secretKey, publicKey);
     this.publicKey = this.cypher.publicKey;
     this.secretKey = this.cypher.secretKey;
-    this.address = getSHA256HexString(this.cypher.publicKey);
-    this.genesisBlock();
+    this.address = getSHA256HexString(this.cypher.publicKey);    
     this.ev = new Events.EventEmitter();
+
+    this.newBlock(0, "genesis");
   }
 
   hash(obj) {
     const objString = JSON.stringify(obj, Object.keys(obj).sort());
 
     return getSHA256HexString(objString);
-  }
-
-  genesisBlock() {
-    this.newTransaction(
-      type.SYSTEM,
-      "genesis",
-      1,
-      type.REWORD,
-      "genesis block"
-    );
-
-    const block = {
-      index: this.chain.length + 1,
-      timestamp: Date.now(),
-      transactions: this.currentTransactions,
-      proof: 0,
-      previousHash: "genesis",
-      owner: "genesis",
-      publicKey: "genesis",
-      sign: ""
-    };
-    block.sign = this.cypher.encrypt(this.hash(block));
-    this.chain.push(block);
-
-    this.currentTransactions = [];
-
-    console.log("genesis block", this.chain);
-
-    return block;
   }
 
   newBlock(proof, previousHash) {
@@ -180,19 +152,21 @@ class Blockchain {
     const address = transaction.sender;
 
     transaction.sign = "";
-    if (this.cypher.decrypt(sign, publicKey) === this.hash(transaction)) {
-      console.log("valid transaction sign");
-      const balance = this.nowAmount(address);
-      if (balance > amount) {
-        console.log("valid transaction balance");
-        transaction.sign = sign;
-        return true;
+    if (getSHA256HexString(publicKey) === address) {
+      if (this.cypher.decrypt(sign, publicKey) === this.hash(transaction)) {
+        console.log("valid transaction sign");
+        const balance = this.nowAmount(address);
+        if (balance > amount) {
+          console.log("valid transaction balance");
+          transaction.sign = sign;
+          return true;
+        } else {
+          console.log("not valid transaction no balance", balance, amount);
+          return false;
+        }
       } else {
-        console.log("not valid transaction no balance", balance, amount);
-        return false;
+        console.log("not valid transaction sign");
       }
-    } else {
-      console.log("not valid transaction sign");
     }
   }
 
