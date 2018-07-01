@@ -47,8 +47,7 @@ export default class BlockchainApp {
             !JSON.stringify(this.blockchain.currentTransactions).includes(
               JSON.stringify(body)
             )
-          ) {
-            console.log("transaction added");
+          ) {            
             this.blockchain.addTransaction(body);
           }
           break;

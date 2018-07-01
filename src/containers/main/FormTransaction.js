@@ -7,6 +7,19 @@ let tokenAmount;
 let targetAddress;
 
 class FormTransaction extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      text: ""
+    };
+  }
+
+  clear = () => {
+    this.setState({
+      text: ""
+    });
+  };
+
   render() {
     const { dispatch, p2p } = this.props;
     return (
@@ -20,12 +33,17 @@ class FormTransaction extends Component {
         <br />
         <TextField
           label="send amount"
-          onChange={e => (tokenAmount = e.target.value)}
+          value={this.state.text}
+          onChange={e => {
+            tokenAmount = e.target.value;
+            this.setState({ text: e.target.value });
+          }}
         />
         <br />
         <Button
           onClick={() => {
             transaction(dispatch, p2p, targetAddress, tokenAmount);
+            this.clear();
           }}
         >
           send

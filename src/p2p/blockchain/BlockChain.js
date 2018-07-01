@@ -2,18 +2,13 @@ import SHA256 from "sha256";
 import { Decimal } from "decimal.js";
 import Cypher from "../lib/cypher";
 import Events from "events";
+import type from "../constants/type";
 
 function getSHA256HexString(input) {
   return SHA256(input).toString();
 }
 
 const diff = /^0000/;
-
-export const type = {
-  SYSTEM: "SYSTEM",
-  REWORD: "REWORD",
-  NEWBLOCK: "NEWBLOCK"
-};
 
 export const action = {
   TRANSACTION: "TRANSACTION",
@@ -28,7 +23,7 @@ class Blockchain {
     this.cypher = new Cypher(secretKey, publicKey);
     this.publicKey = this.cypher.publicKey;
     this.secretKey = this.cypher.secretKey;
-    this.address = getSHA256HexString(this.cypher.publicKey);    
+    this.address = getSHA256HexString(this.cypher.publicKey);
     this.ev = new Events.EventEmitter();
 
     this.newBlock(0, "genesis");
