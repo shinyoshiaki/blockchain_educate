@@ -17,14 +17,14 @@ const actionType = {
   ADDPEER: "ADDPEER"
 };
 
-export function connectPortal(dispatch, p2p, input) {
+export function connectPortal(
+  dispatch,
+  p2p,
+  input = { targetAddress: "localhost", targetPort: "20000" }
+) {
   if (p2p.isFirst) {
-    const node = new Node(
-      input.myPort,
-      input.targetAddress,
-      input.targetPort,
-      input.isLocal
-    );
+    console.log("first");
+    const node = new Node(input.targetAddress, input.targetPort);
     const data = {
       node: node,
       blockchainApp: new BlockchainApp(node.nodeId, node)

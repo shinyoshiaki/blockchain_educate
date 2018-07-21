@@ -5,16 +5,15 @@ import { connectPortal, onAddPeerEvent } from "../module/P2P";
 import { onTransactionEvent } from "../module/Blockchain";
 import BtnClean from "../components/main/BtnClean";
 
-let targetAddress, targetPort;
+let targetAddress = "localhost",
+  targetPort = "20000";
 
 class login extends React.Component {
   connectNode = () => {
     const { dispatch, p2p } = this.props;
     const data = connectPortal(dispatch, p2p, {
-      myPort: 20000,
       targetAddress: targetAddress,
-      targetPort: targetPort,
-      isLocal: true
+      targetPort: targetPort
     });
     onTransactionEvent(dispatch, data.node, data.blockchainApp);
     onAddPeerEvent(dispatch, data.node.mesh);

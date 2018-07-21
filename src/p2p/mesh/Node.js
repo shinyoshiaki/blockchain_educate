@@ -14,12 +14,12 @@ const def = {
 
 let peerOffer;
 export default class Node {
-  constructor(myPort, targetAddress, targetPort, isLocal) {
-    this.myPort = myPort;
-    this.myUrl = undefined;
+  constructor(targetAddress, targetPort) {
+    console.log("node start", targetAddress, targetPort);
     this.targetUrl = undefined;
     if (targetAddress != undefined && targetAddress.length > 0) {
       this.targetUrl = "http://" + targetAddress + ":" + targetPort;
+      console.log("target url", this.targetUrl);
     }
 
     this.nodeId = sha1(Math.random().toString());
@@ -28,25 +28,14 @@ export default class Node {
     this.mesh = new Mesh(this.nodeId);
     this.ev = new events.EventEmitter();
 
-    this.mesh.ev.on(def.ONCOMMAND, datalinkLayer => {      
+    this.mesh.ev.on(def.ONCOMMAND, datalinkLayer => {
       if (JSON.stringify(datalinkLayer).includes("p2ch")) {
-        const networkLayer = datalinkLayer.data;        
+        const networkLayer = datalinkLayer.data;
         this.ev.emit("p2ch", networkLayer);
       }
     });
 
-    if (isLocal) {
-      this.myUrl = "http://localhost:" + this.myPort;
-      console.log("start local", this.myUrl);
-    } else {
-      (async () => {
-        const result = await publicIp.v4();
-        this.myUrl = `http://${result}:${this.myPort}`;
-        console.log("start global", this.myUrl);
-      })();
-    }
-
-    if (this.targetUrl != undefined) {
+    if (this.targetUrl !== undefined) {
       const socket = client.connect(this.targetUrl);
 
       socket.on("connect", () => {
@@ -81,11 +70,11 @@ export default class Node {
     });
   }
 
-  broadCast(data) {    
+  broadCast(data) {
     this.mesh.broadCast(def.MESH_MESSAGE, data);
   }
 
-  send(target, data) {    
+  send(target, data) {
     for (let key in this.mesh.peerList) {
       console.log(key);
     }
