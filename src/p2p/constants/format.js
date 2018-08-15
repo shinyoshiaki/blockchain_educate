@@ -27,7 +27,7 @@ export function packetFormat(type, data) {
 export function sendFormat(session, body) {
   return JSON.stringify({
     layer: "transport",
-    transport: "p2ch",
+    transport: "blockchainApp",
     type: type.BLOCKCHAIN,
     session: session,
     body: body //transaction format / board format

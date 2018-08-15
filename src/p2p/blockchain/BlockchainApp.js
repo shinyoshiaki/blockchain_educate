@@ -1,140 +1,151 @@
-import Blockchain from "./BlockChain";
+import BlockChain from "./BlockChain";
 import type from "../constants/type";
 import * as format from "../constants/format";
 import Events from "events";
 
-let nodeId;
 let node;
 
-export default class BlockchainApp {
-  constructor(id, _node) {
-    nodeId = id;
-    this.blockchain = new Blockchain();
+export default class BlockChainApp extends BlockChain {
+  constructor(_node) {
+    super();
     this.ev = new Events.EventEmitter();
-
-    let local = localStorage.getItem(type.BLOCKCHAIN);
-    if (local !== null && local.length > 0) {
-      this.blockchain.chain = JSON.parse(local);
-      console.log("load blockchain", this.blockchain.chain);
-    }
 
     node = _node;
 
-    node.ev.on("p2ch", networkLayer => {
+    //リモートで実行する関数
+    const RPC = {};
+    //ポータルノードのイベント
+    node.ev.on("blockchainApp", networkLayer => {
       const transportLayer = JSON.parse(networkLayer);
-      console.log("blockchainApp", "p2ch", transportLayer);
-
-      this.ev.emit(transportLayer.session, transportLayer.body);
       const body = transportLayer.body;
+      const type = transportLayer.session;
 
-      switch (transportLayer.session) {
-        case type.NEWBLOCK:
-          console.log("blockchainApp", "new block", body);
-          if (
-            body.index > this.blockchain.chain.length + 1 ||
-            this.blockchain.chain.length === 1
-          ) {
-            (async () => {
-              await this.checkConflicts();
-            })();
-          } else {
-            this.blockchain.addBlock(body);
-          }
-          break;
-        case type.TRANSACRION:
-          console.log("blockchainApp transaction", body);
-          if (
-            !JSON.stringify(this.blockchain.currentTransactions).includes(
-              JSON.stringify(body)
-            )
-          ) {            
-            this.blockchain.addTransaction(body);
-          }
-          break;
-        case type.CONFLICT:
-          console.log("blockchain app check conflict");
-          if (this.blockchain.chain.length > body.size) {
-            console.log("blockchain app check is conflict");
-            node.send(
-              body.nodeId,
-              format.sendFormat(type.RESOLVE_CONFLICT, this.blockchain.chain)
-            );
-          }
-          break;
-        default:
-          break;
+      //イベントを作成、他の関数がこのイベントを利用する(例：87行目)
+      this.ev.emit(type, body);
+
+      //受け取ったtypeに対応するリモート関数を実行
+      if (Object.keys(RPC).includes(type)) {
+        RPC[type](body);
       }
     });
+
+    //マイニングに対応する処理
+    RPC[type.NEWBLOCK] = body => {
+      console.log("blockchainApp", "new block");
+      //受け取ったブロックのインデックスが自分のチェーンより2長いか
+      //現時点のチェーンの長さが1ならブロックチェーンの分岐を疑う
+      if (body.index > this.chain.length + 1 || this.chain.length === 1) {
+        //ブロックチェーンの分岐を調べる
+        this.checkConflicts().then(
+          () => {
+            console.log("chenck conf success");
+          },
+          () => {
+            console.log("chenck conf timeout");
+          }
+        );
+      } else {
+        //新しいブロックを受け入れる
+        this.addBlock(body);
+      }
+    };
+
+    //トランザクションに対する処理
+    RPC[type.TRANSACRION] = body => {
+      console.log("blockchainApp transaction", body);
+      if (
+        //トランザクションプールに受け取ったトランザクションがあるか簡易的に調べる
+        !this.jsonStr(this.currentTransactions).includes(this.jsonStr(body))
+      ) {
+        //トランザクションをトランザクションプールに加える
+        this.addTransaction(body);
+      }
+    };
+
+    //ブロックチェーンの状況を聞かれたときの返答
+    RPC[type.CONFLICT] = body => {
+      console.log("blockchain app check conflict");
+      //自分のチェーンが質問者より長ければ、自分のチェーンを返す
+      if (this.chain.length > body.size) {
+        console.log("blockchain app check is conflict");
+        node.send(
+          body.nodeId,
+          format.sendFormat(type.RESOLVE_CONFLICT, this.chain)
+        );
+      }
+    };
   }
 
   checkConflicts() {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve(false);
-      }, 4 * 1000);
+    return new Promise((resolve, reject) => {
       console.log("this.checkConflicts");
+      //他のノードにブロックチェーンの状況を聞く
       node.broadCast(
         format.sendFormat(type.CONFLICT, {
-          nodeId: nodeId,
-          size: this.blockchain.chain.length
+          nodeId: node.nodeId,
+          size: this.chain.length
         })
       );
+      //他のノードからの回答を調べる
       this.ev.on(type.RESOLVE_CONFLICT, body => {
         console.log("resolve conflict");
-        if (this.blockchain.chain.length < body.length) {
+        if (this.chain.length < body.length) {
           console.log("conflict my chain short");
-          if (this.blockchain.validChain(body)) {
+          if (this.validChain(body)) {
             console.log("conflict swap chain");
-            this.blockchain.chain = body;
+            this.chain = body;
           } else {
             console.log("conflict wrong chain");
           }
         }
         resolve(true);
       });
+      //タイムアウト
+      setTimeout(() => {
+        reject(false);
+      }, 4 * 1000);
     });
   }
 
+  //マイニング
   mine() {
+    //非同期処理
     return new Promise(resolve => {
-      const proof = this.blockchain.proofOfWork();
-
-      const lastBlock = this.blockchain.lastBlock();
-      const previousHash = this.blockchain.hash(lastBlock);
-      const block = this.blockchain.newBlock(proof, previousHash);
+      //プルーフオブワーク(ナンスの探索)
+      const proof = this.proofOfWork();
+      //最後のブロックのハッシュ値
+      const previousHash = this.hash(this.lastBlock());
+      //新しいブロック
+      const block = this.newBlock(proof, previousHash);
 
       console.log("new block forged", JSON.stringify(block));
-
-      this.saveChain();
-
+      //ネットワークにブロードキャスト
       node.broadCast(format.sendFormat(type.NEWBLOCK, block));
-
+      //完了
       resolve(block);
     });
   }
 
-  //sessionLayer
+  //トランザクション
   makeTransaction(recipient, amount, data) {
-    const tran = this.blockchain.newTransaction(
-      this.blockchain.address,
-      recipient,
-      amount,
-      data
-    );
+    //入力情報が足りているか
+    if (!(recipient && amount)) {
+      console.log("input error");
+      return;
+    }
+    //残高が足りているか
+    if (amount > this.nowAmount()) {
+      console.log("input error");
+      return;
+    }
+    //トランザクションの生成
+    const tran = this.newTransaction(this.address, recipient, amount, data);
     console.log("makeTransaction", tran);
-
+    //トランザクションをブロードキャスト
     node.broadCast(format.sendFormat(type.TRANSACRION, tran));
   }
 
   getChain() {
-    this.saveChain();
-    return this.blockchain.chain;
-  }
-
-  saveChain() {
-    localStorage.setItem(
-      type.BLOCKCHAIN,
-      JSON.stringify(this.blockchain.chain)
-    );
+    return this.chain;
   }
 }

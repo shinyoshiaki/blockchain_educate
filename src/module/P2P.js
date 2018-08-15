@@ -27,7 +27,7 @@ export function connectPortal(
     const node = new Node(input.targetAddress, input.targetPort);
     const data = {
       node: node,
-      blockchainApp: new BlockchainApp(node.nodeId, node)
+      blockchainApp: new BlockchainApp(node)
     };
     dispatch({ type: actionType.CONNECT, data: data });
     return data;

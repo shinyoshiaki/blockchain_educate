@@ -39,7 +39,7 @@ export function transaction(dispatch, p2p, targetAddress, amount) {
 }
 
 export function onTransactionEvent(dispatch, node, blockchainApp) {
-  node.ev.on("p2ch", networkLayer => {
+  node.ev.on("blockchainApp", networkLayer => {
     const transportLayer = JSON.parse(networkLayer);
     if ((transportLayer.type = type.BLOCKCHAIN)) {
       dispatch({
