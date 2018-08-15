@@ -24,7 +24,7 @@ export function mining(dispatch, p2p) {
   miningRequest(dispatch);
   async function sync() {
     await blockchainApp.mine();
-    miningSuccess(dispatch, blockchainApp.blockchain.nowAmount());
+    miningSuccess(dispatch, blockchainApp.nowAmount());
   }
   sync();
 }
@@ -34,7 +34,7 @@ export function transaction(dispatch, p2p, targetAddress, amount) {
   blockchainApp.makeTransaction(targetAddress, amount);
   dispatch({
     type: actionType.TRANSACTION,
-    data: blockchainApp.blockchain.nowAmount()
+    data: blockchainApp.nowAmount()
   });
 }
 
@@ -44,7 +44,7 @@ export function onTransactionEvent(dispatch, node, blockchainApp) {
     if ((transportLayer.type = type.BLOCKCHAIN)) {
       dispatch({
         type: actionType.TRANSACTION,
-        data: blockchainApp.blockchain.nowAmount()
+        data: blockchainApp.nowAmount()
       });
     }
   });

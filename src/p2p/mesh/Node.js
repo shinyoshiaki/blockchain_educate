@@ -17,7 +17,7 @@ export default class Node {
     if (targetAddress !== null) {
       console.log("node start", targetAddress, targetPort);
       this.targetUrl = undefined;
-      if (targetAddress != undefined && targetAddress.length > 0) {
+      if (targetAddress !== undefined && targetAddress.length > 0) {
         this.targetUrl = "http://" + targetAddress + ":" + targetPort;
         console.log("target url", this.targetUrl);
       }

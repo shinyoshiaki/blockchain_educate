@@ -51,7 +51,7 @@ export default function reducer(state = initialState, action) {
         node: action.data.node,
         blockchainApp: action.data.blockchainApp,
         nodeId: action.data.node.nodeId,
-        address: action.data.blockchainApp.blockchain.address,
+        address: action.data.blockchainApp.address,
         isFirst: false
       };
     case actionType.ADDPEER:

@@ -3,9 +3,6 @@ const simplePeer = require("simple-peer");
 
 export default class webrtc {
   constructor(_type) {
-    this.rtc;
-    this.nodeId;
-    this.targetId;
     this.isConnected = false;
     this.isCheking = false;
     this.type = _type;
