@@ -2,13 +2,16 @@ import BlockChain from "./BlockChain";
 import type from "../constants/type";
 import * as format from "../constants/format";
 import Events from "events";
+import sha1 from "sha1";
 
 let node;
 
 export default class BlockChainApp extends BlockChain {
-  constructor(_node) {
-    super();
+  keyword = "";
+  constructor(_node, secretKey, publicKey) {
+    super(secretKey, publicKey);
     this.ev = new Events.EventEmitter();
+    this.loadChain();
 
     node = _node;
 
@@ -26,6 +29,7 @@ export default class BlockChainApp extends BlockChain {
       //受け取ったtypeに対応するリモート関数を実行
       if (Object.keys(RPC).includes(type)) {
         RPC[type](body);
+        this.saveChain();
       }
     });
 
@@ -121,6 +125,7 @@ export default class BlockChainApp extends BlockChain {
       console.log("new block forged", JSON.stringify(block));
       //ネットワークにブロードキャスト
       node.broadCast(format.sendFormat(type.NEWBLOCK, block));
+      this.saveChain();
       //完了
       resolve(block);
     });
@@ -143,9 +148,26 @@ export default class BlockChainApp extends BlockChain {
     console.log("makeTransaction", tran);
     //トランザクションをブロードキャスト
     node.broadCast(format.sendFormat(type.TRANSACRION, tran));
+    this.saveChain();
   }
 
   getChain() {
     return this.chain;
+  }
+
+  saveChain() {
+    localStorage.setItem("blockchain", JSON.stringify(this.chain));
+  }
+
+  loadChain() {
+    this.keyword = sha1(this.publicKey + this.secretKey);
+    localStorage.setItem(
+      this.keyword,
+      JSON.stringify({ publicKey: this.publicKey, secretKey: this.secretKey })
+    );
+    const chain = localStorage.getItem("blockchain");
+    if (chain) {
+      this.chain = JSON.parse(chain);
+    }
   }
 }

@@ -8,7 +8,8 @@ export const initialState = {
 const actionType = {
   MINING_REQUEST: "MINING_REQUEST",
   MINING_SUCCESS: "MINING_SUCCESS",
-  TRANSACTION: "TRANSACTION"
+  TRANSACTION: "TRANSACTION",
+  INIT_AMOUNT: "INIT_AMOUNT"
 };
 
 export function mining(dispatch, p2p) {
@@ -50,6 +51,10 @@ export function onTransactionEvent(dispatch, node, blockchainApp) {
   });
 }
 
+export function initTokenAmount(dispatch, blockchainApp) {
+  dispatch({ type: actionType.INIT_AMOUNT, data: blockchainApp.nowAmount() });
+}
+
 export default function reducer(state = initialState, action) {
   switch (action.type) {
     case actionType.MINING_REQUEST:
@@ -68,6 +73,8 @@ export default function reducer(state = initialState, action) {
         ...state,
         tokenAmount: action.data
       };
+    case actionType.INIT_AMOUNT:
+      return { ...state, tokenAmount: action.data };
     default:
       return state;
   }

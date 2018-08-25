@@ -7,15 +7,21 @@ import { changeScreen } from "../module/router";
 import BtnClean from "../components/main/BtnClean";
 
 let targetAddress = "localhost",
-  targetPort = "20000";
+  targetPort = "20000",
+  keyword = "";
 
 class login extends React.Component {
   connectNode = () => {
     const { dispatch, p2p } = this.props;
-    const data = connectPortal(dispatch, p2p, {
-      targetAddress: targetAddress,
-      targetPort: targetPort
-    });
+    const data = connectPortal(
+      dispatch,
+      p2p,
+      {
+        targetAddress: targetAddress,
+        targetPort: targetPort
+      },
+      keyword
+    );
     onTransactionEvent(dispatch, data.node, data.blockchainApp);
     onAddPeerEvent(dispatch, data.node.mesh);
 
@@ -35,6 +41,8 @@ class login extends React.Component {
           label="target port"
           onChange={e => (targetPort = e.target.value)}
         />
+        <br />
+        <TextField label="keyword" onChange={e => (keyword = e.target.value)} />
         <br />
         <Button onClick={this.connectNode}>connect</Button>
         <br />
