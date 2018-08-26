@@ -10,7 +10,7 @@ class BtnMining extends Component {
   }
   render() {
     return (
-      <ul>
+      <div>
         <Button
           onClick={() => {
             this.mining();
@@ -18,14 +18,14 @@ class BtnMining extends Component {
         >
           mining
         </Button>
-      </ul>
+      </div>
     );
   }
 }
 
 const mapStateToProps = state => {
   return {
-    p2p: state.p2p,    
+    p2p: state.p2p
   };
 };
 

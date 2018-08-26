@@ -25,20 +25,17 @@ export function connectPortal(
   keyword = ""
 ) {
   if (p2p.isFirst) {
-    console.log("first");
-    const node = new Node(input.targetAddress, input.targetPort);
+    const node = new Node(input.targetAddress, input.targetPort); //ポータルノードに接続
     let keys = { publicKey: null, secretKey: null };
     if (keyword.length > 5) {
       const json = localStorage.getItem(keyword);
-      console.log("json", json);
       keys = JSON.parse(json);
     }
-    console.log("keys", keys);
     const data = {
       node: node,
-      blockchainApp: new BlockchainApp(node, keys.secretKey, keys.publicKey)
+      blockchainApp: new BlockchainApp(node, keys.secretKey, keys.publicKey) //ブロックチェーンの起動
     };
-    dispatch({ type: actionType.CONNECT, data: data });
+    dispatch({ type: actionType.CONNECT, data: data }); //状態を保存
     return data;
   } else return null;
 }

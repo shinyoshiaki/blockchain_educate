@@ -28,15 +28,15 @@ class FormTransaction extends Component {
         <Typography gutterBottom>Transaction Form</Typography>
         <TextField
           label="target address"
-          onChange={e => (targetAddress = e.target.value)}
+          onChange={e => {
+            targetAddress = e.target.value;
+          }}
         />
         <br />
         <TextField
           label="send amount"
-          value={this.state.text}
           onChange={e => {
             tokenAmount = e.target.value;
-            this.setState({ text: e.target.value });
           }}
         />
         <br />

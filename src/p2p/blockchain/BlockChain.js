@@ -106,7 +106,7 @@ class BlockChain {
       publicKey: this.publicKey, //公開鍵
       sign: "" //署名
     };
-    tran.sign = this.cypher.encrypt(this.hash(tran));
+    tran.sign = this.cypher.encrypt(this.hash(tran)); //秘密鍵で暗号化
     this.currentTransactions.push(tran);
 
     return tran;
@@ -147,6 +147,7 @@ class BlockChain {
     //公開鍵が送金者のものかどうか
     if (getSHA256HexString(publicKey) === address) {
       //署名が正しいかどうか
+      //公開鍵で署名を解読しトランザクションのハッシュ値と一致することを確認する。
       if (this.cypher.decrypt(sign, publicKey) === this.hash(transaction)) {
         const balance = this.nowAmount(address);
         //送金可能な金額を超えているかどうか

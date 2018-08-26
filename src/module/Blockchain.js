@@ -12,27 +12,21 @@ const actionType = {
   INIT_AMOUNT: "INIT_AMOUNT"
 };
 
-export function mining(dispatch, p2p) {
-  function miningRequest(dispatch) {
-    dispatch({ type: actionType.MINING_REQUEST });
-  }
-
-  function miningSuccess(dispatch, data) {
-    dispatch({ type: actionType.MINING_SUCCESS, data: data });
-  }
+export async function mining(dispatch, p2p) {
+  dispatch({ type: actionType.MINING_REQUEST });  //マイニングの開始
 
   const blockchainApp = p2p.blockchainApp;
-  miningRequest(dispatch);
-  async function sync() {
-    await blockchainApp.mine();
-    miningSuccess(dispatch, blockchainApp.nowAmount());
-  }
-  sync();
+  await blockchainApp.mine(); //マイニング
+
+  dispatch({  
+    type: actionType.MINING_SUCCESS,  //マイニングの終了
+    data: blockchainApp.nowAmount()
+  });
 }
 
 export function transaction(dispatch, p2p, targetAddress, amount) {
   const blockchainApp = p2p.blockchainApp;
-  blockchainApp.makeTransaction(targetAddress, amount);
+  blockchainApp.makeTransaction(targetAddress, amount); //トランザクションの実行
   dispatch({
     type: actionType.TRANSACTION,
     data: blockchainApp.nowAmount()
