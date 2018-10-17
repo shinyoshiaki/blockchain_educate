@@ -1,4 +1,4 @@
-import type from "../p2p/constants/type";
+import type from "blockchain-ts/lib/blockchain/type";
 
 export const initialState = {
   isMining: false,
@@ -13,13 +13,13 @@ const actionType = {
 };
 
 export async function mining(dispatch, p2p) {
-  dispatch({ type: actionType.MINING_REQUEST });  //マイニングの開始
+  dispatch({ type: actionType.MINING_REQUEST }); //マイニングの開始
 
   const blockchainApp = p2p.blockchainApp;
   await blockchainApp.mine(); //マイニング
 
-  dispatch({  
-    type: actionType.MINING_SUCCESS,  //マイニングの終了
+  dispatch({
+    type: actionType.MINING_SUCCESS, //マイニングの終了
     data: blockchainApp.nowAmount()
   });
 }
@@ -34,15 +34,16 @@ export function transaction(dispatch, p2p, targetAddress, amount) {
 }
 
 export function onTransactionEvent(dispatch, node, blockchainApp) {
-  node.ev.on("blockchainApp", networkLayer => {
-    const transportLayer = JSON.parse(networkLayer);
-    if ((transportLayer.type = type.BLOCKCHAIN)) {
-      dispatch({
-        type: actionType.TRANSACTION,
-        data: blockchainApp.nowAmount()
-      });
-    }
-  });
+  // node.kad
+  // node.ev.on("blockchainApp", networkLayer => {
+  //   const transportLayer = JSON.parse(networkLayer);
+  //   if ((transportLayer.type = type.BLOCKCHAIN)) {
+  //     dispatch({
+  //       type: actionType.TRANSACTION,
+  //       data: blockchainApp.nowAmount()
+  //     });
+  //   }
+  // });
 }
 
 export function initTokenAmount(dispatch, blockchainApp) {

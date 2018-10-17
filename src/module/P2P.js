@@ -1,6 +1,5 @@
-import Node from "../p2p/mesh/Node";
-import BlockchainApp from "../p2p/blockchain/BlockchainApp";
-import { action } from "../p2p/mesh/Mesh";
+import Node from "blockchain-ts/lib/node/node";
+import BlockchainApp from "blockchain-ts/lib/blockchain/blockchainApp";
 
 export const initialState = {
   isFirst: true,
@@ -25,7 +24,7 @@ export function connectPortal(
   keyword = ""
 ) {
   if (p2p.isFirst) {
-    const node = new Node(input.targetAddress, input.targetPort); //ポータルノードに接続
+    const node = new Node(input.targetAddress, input.targetPort); //ポータルノードに接続    
     let keys = { publicKey: null, secretKey: null };
     if (keyword.length > 5) {
       const json = localStorage.getItem(keyword);
@@ -41,12 +40,12 @@ export function connectPortal(
 }
 
 export function onAddPeerEvent(dispatch, mesh) {
-  mesh.ev.on(action.PEER, () => {
-    dispatch({
-      type: actionType.ADDPEER,
-      data: mesh.getAllPeerId()
-    });
-  });
+  // mesh.ev.on(action.PEER, () => {
+  //   dispatch({
+  //     type: actionType.ADDPEER,
+  //     data: mesh.getAllPeerId()
+  //   });
+  // });
 }
 
 export default function reducer(state = initialState, action) {
