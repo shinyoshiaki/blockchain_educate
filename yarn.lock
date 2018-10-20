@@ -1399,8 +1399,8 @@ block-stream@*:
     inherits "~2.0.0"
 
 "blockchain-ts@git+ssh://git@bitbucket.org:shinyoshiaki/blockchian-ts.git":
-  version "0.0.9"
-  resolved "git+ssh://git@bitbucket.org:shinyoshiaki/blockchian-ts.git#5f9f115ceec131767b8bd42d873b6e7fbdd11407"
+  version "0.0.10"
+  resolved "git+ssh://git@bitbucket.org:shinyoshiaki/blockchian-ts.git#e44dcf6f77c3615871b289d544bfc77d6a6e54f1"
   dependencies:
     babel-polyfill "^6.26.0"
     bcrypto "^2.0.0"

@@ -1,13 +1,11 @@
-import BlockChain from "./BlockChain";
+import BlockChain from "blockchain-ts";
 import type from "../constants/type";
 import * as format from "../constants/format";
 import Events from "events";
-import sha1 from "sha1";
 
 let node;
 
 export default class BlockChainApp extends BlockChain {
-  keyword = "";
   constructor(_node, secretKey, publicKey) {
     super(secretKey, publicKey);
     this.ev = new Events.EventEmitter();
@@ -40,14 +38,7 @@ export default class BlockChainApp extends BlockChain {
       //現時点のチェーンの長さが1ならブロックチェーンの分岐を疑う
       if (body.index > this.chain.length + 1 || this.chain.length === 1) {
         //ブロックチェーンの分岐を調べる
-        this.checkConflicts().then(
-          () => {
-            console.log("chenck conf success");
-          },
-          () => {
-            console.log("chenck conf timeout");
-          }
-        );
+        this.checkConflicts().catch(console.log);
       } else {
         //新しいブロックを受け入れる
         this.addBlock(body);
@@ -83,6 +74,10 @@ export default class BlockChainApp extends BlockChain {
   checkConflicts() {
     return new Promise((resolve, reject) => {
       console.log("this.checkConflicts");
+      //タイムアウト
+      const timeout = setTimeout(() => {
+        reject("chenck conf timeout");
+      }, 4 * 1000);
       //他のノードにブロックチェーンの状況を聞く
       node.broadCast(
         format.sendFormat(type.CONFLICT, {
@@ -102,72 +97,21 @@ export default class BlockChainApp extends BlockChain {
             console.log("conflict wrong chain");
           }
         }
+        clearTimeout(timeout);
         resolve(true);
       });
-      //タイムアウト
-      setTimeout(() => {
-        reject(false);
-      }, 4 * 1000);
     });
   }
 
   //マイニング
-  mine() {
-    //非同期処理
-    return new Promise(resolve => {
-      //プルーフオブワーク(ナンスの探索)
-      const proof = this.proofOfWork();
-      //最後のブロックのハッシュ値
-      const previousHash = this.hash(this.lastBlock());
-      //新しいブロック
-      const block = this.newBlock(proof, previousHash);
-
-      console.log("new block forged", JSON.stringify(block));
-      //ネットワークにブロードキャスト
-      node.broadCast(format.sendFormat(type.NEWBLOCK, block));
-      this.saveChain();
-      //完了
-      resolve(block);
-    });
+  async mine() {
+    const block = await super.mine();
+    node.broadCast(format.sendFormat(type.NEWBLOCK, block));
   }
 
   //トランザクション
   makeTransaction(recipient, amount, data) {
-    //入力情報が足りているか
-    if (!(recipient && amount)) {
-      console.log("input error");
-      return;
-    }
-    //残高が足りているか
-    if (amount > this.nowAmount()) {
-      console.log("input error");
-      return;
-    }
-    //トランザクションの生成
-    const tran = this.newTransaction(this.address, recipient, amount, data);
-    console.log("makeTransaction", tran);
-    //トランザクションをブロードキャスト
+    const tran = super.makeTransaction(recipient, amount, data);
     node.broadCast(format.sendFormat(type.TRANSACRION, tran));
-    this.saveChain();
-  }
-
-  getChain() {
-    return this.chain;
-  }
-
-  saveChain() {
-    localStorage.setItem("blockchain", JSON.stringify(this.chain));
-  }
-
-  loadChain() {
-    this.keyword = sha1(this.publicKey + this.secretKey);
-    localStorage.setItem(
-      this.keyword,
-      JSON.stringify({ publicKey: this.publicKey, secretKey: this.secretKey })
-    );
-    const chain = localStorage.getItem("blockchain");
-    if (chain) {
-      this.chain = JSON.parse(chain);
-    }
   }
 }
