@@ -8,6 +8,7 @@ import TextNodeId from "../components/main/TextNodeId";
 import FormTransaction from "../containers/main/FormTransaction";
 import TextKeyword from "../components/main/TextKeyword";
 import { initTokenAmount } from "../module/Blockchain";
+import FormMultisig from "./main/FormMultisig";
 
 class Main extends Component {
   componentWillMount() {
@@ -26,6 +27,7 @@ class Main extends Component {
         <BtnMining />
         <FormTransaction />
         <TextPeers p2p={p2p} />
+        <FormMultisig />
       </div>
     );
   }

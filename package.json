@@ -6,9 +6,11 @@
   "dependencies": {
     "@material-ui/core": "^3.2.2",
     "@material-ui/icons": "^3.0.1",
+    "aes256": "^1.0.4",
     "babel-register": "^6.26.0",
     "base-64": "^0.1.0",
     "blockchain-ts": "git+ssh://git@bitbucket.org:shinyoshiaki/blockchian-ts.git",
+    "buffer": "^5.2.1",
     "crypto": "^1.0.1",
     "decimal.js": "^10.0.1",
     "events": "^3.0.0",

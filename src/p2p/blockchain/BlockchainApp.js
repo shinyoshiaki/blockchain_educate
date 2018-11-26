@@ -7,6 +7,7 @@ let node;
 
 export default class BlockChainApp extends BlockChain {
   constructor(_node, secretKey, publicKey) {
+    console.log("sub blockchainapp");
     super(secretKey, publicKey);
     this.ev = new Events.EventEmitter();
     this.loadChain();
@@ -54,6 +55,14 @@ export default class BlockChainApp extends BlockChain {
       ) {
         //トランザクションをトランザクションプールに加える
         this.addTransaction(body);
+      }
+
+      //拡張命令
+      const data = body.data;
+      switch (data.type) {
+        case "multisig":
+          this.multisig.responder(data);
+          break;
       }
     };
 
@@ -105,13 +114,39 @@ export default class BlockChainApp extends BlockChain {
 
   //マイニング
   async mine() {
-    const block = await super.mine();
+    const block = await this.mine();
     node.broadCast(format.sendFormat(type.NEWBLOCK, block));
   }
 
   //トランザクション
   makeTransaction(recipient, amount, data) {
-    const tran = super.makeTransaction(recipient, amount, data);
+    const tran = this.makeTransaction(recipient, amount, data);
+    node.broadCast(format.sendFormat(type.TRANSACRION, tran));
+  }
+
+  makeNewMultiSigAddress(friends, vote, amount) {
+    console.log("sub makeNewMultiSigAddress");
+    const tran = this.multisig.makeNewMultiSigAddress(friends, vote, amount);
+    node.broadCast(format.sendFormat(type.TRANSACRION, tran));
+  }
+
+  makeMultiSigTransaction(multisigAddress, amount) {
+    const tran = this.multisig.makeMultiSigTransaction(
+      multisigAddress,
+      amount
+    );
+    node.broadCast(format.sendFormat(type.TRANSACRION, tran));
+  }
+
+  approveMultiSig(multisig) {
+    const tran = this.multisig.approveMultiSig(multisig);
+    if (tran) {
+      node.broadCast(format.sendFormat(type.TRANSACRION, tran));
+    }
+  }
+
+  verifyMultiSig(pub, shares) {
+    const tran = this.multisig.verifyMultiSig(pub, shares);
     node.broadCast(format.sendFormat(type.TRANSACRION, tran));
   }
 }
